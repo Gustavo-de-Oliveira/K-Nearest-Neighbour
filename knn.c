@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 typedef struct atributos{
 	float sepal_length;
@@ -10,14 +11,22 @@ typedef struct atributos{
 	char class[15];
 }atributos;
 
-void LerTreino(atributos *treino, FILE *treino_arq);
-void LerExemplo(atributos *exemplo, FILE *exemplo_arq);
+typedef struct distancia{
+	float distancia;
+	char class[15];
+}distancia;
+
+int LerTreino(atributos *treino, FILE *treino_arq);
+int LerExemplo(atributos *exemplo, FILE *exemplo_arq);
+void insertion_sort(distancia *v, int n);
 
 int main(int argc, char const *argv[]){
 	char nome[9];
-	FILE *treino_arq = NULL, *exemplo_arq = NULL;
 	int k = 0;
+	float dist = 0;
 	atributos *treino, *exemplo;
+	distancia *distancia_vet;
+	FILE *treino_arq = NULL, *exemplo_arq = NULL;
 
 	scanf("%s", nome);
 	treino_arq = fopen(nome, "r+b");
@@ -29,20 +38,42 @@ int main(int argc, char const *argv[]){
 
 	treino = (atributos*) malloc(150 * sizeof(atributos));
 	exemplo = (atributos*) malloc(150 * sizeof(atributos));
+	distancia_vet = (distancia*) malloc(150 * sizeof(distancia));
 
-	LerTreino(treino, treino_arq);
-	LerExemplo(exemplo, exemplo_arq);
+	int tamTreino = LerTreino(treino, treino_arq);
+	int tamExemplo = LerExemplo(exemplo, exemplo_arq);
 
-	for (int i = 0; i < 50; ++i){
-		printf("%f, %f, %f, %f, %s\n", exemplo[i].sepal_length,exemplo[i].sepal_width, exemplo[i].petal_length, exemplo[i].petal_width, exemplo[i].class);
+	for (int i = 0; i < tamExemplo; ++i){
+		for (int j = 0; j < tamTreino; ++j){
+			dist = sqrt(pow(treino[j].sepal_length - exemplo[i].sepal_length, 2) + pow(treino[j].sepal_width - exemplo[i].sepal_width, 2) + pow(treino[j].petal_length - exemplo[i].petal_length, 2) + pow(treino[j].petal_width - exemplo[i].petal_width, 2));
+
+			distancia_vet[j].distancia = dist;
+			strcpy(distancia_vet[j].class, treino[j].class);
+		}
+		
+		insertion_sort(distancia_vet, tamTreino);
+
+		int a = 0, b = 0, c = 0;
+		for (int j = 1; j < k+1; ++j){
+			printf("%s\n", distancia_vet[j].class);
+			if(strcmp(distancia_vet[j].class, "setosa") == 0) a++;
+			if(strcmp(distancia_vet[j].class, "versicolor") == 0)b++;
+			if(strcmp(distancia_vet[j].class, "virginica") == 0)c++;
+			
+		}
+
+		if (a > b && a > c) printf("setosa %s\n", exemplo[i].class);
+		if (b > a && b > c) printf("versicolor %s\n", exemplo[i].class);
+		if (c > b && c > a) printf("virginica %s\n", exemplo[i].class);
 	}
 
 	free(treino);
 	free(exemplo);
+	free(distancia_vet);
 	return 0;
 }
 
-void LerTreino(atributos *treino, FILE *treino_arq){
+int LerTreino(atributos *treino, FILE *treino_arq){
 	char linha[150], *token;
   	const char s[2] = ",";
   	int i = 0, j = 0;
@@ -65,10 +96,10 @@ void LerTreino(atributos *treino, FILE *treino_arq){
  	}
 
  	fclose(treino_arq);
-	return;
+	return i+1;
 }
 
-void LerExemplo(atributos *exemplo, FILE *exemplo_arq){
+int LerExemplo(atributos *exemplo, FILE *exemplo_arq){
 	char linha[150], *token;
   	const char s[2] = ",";
   	int i = 0, j = 0;
@@ -91,5 +122,25 @@ void LerExemplo(atributos *exemplo, FILE *exemplo_arq){
  	}
 
  	fclose(exemplo_arq);
-	return;
+	return i+1;
+}
+
+void insertion_sort(distancia *v, int n){
+	int i = 1; 
+
+	while (i < n) {
+		float chave = v[i].distancia;
+		char classe[15]; 
+		strcpy(classe, v[i].class);
+
+		int j = i-1;
+		while (j >= 0 && chave < v[j].distancia) {
+			v[j+1].distancia = v[j].distancia;
+			strcpy(v[j+1].class, v[j].class);
+			j--;
+		}
+		v[j+1].distancia = chave;
+		strcpy(v[j+1].class, classe);
+		i++;
+	}
 }
